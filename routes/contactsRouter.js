@@ -8,9 +8,11 @@ import {
   updateStatusContact,
 } from "../controllers/contactsController.js";
 import validateBody from "../helpers/validateBody.js";
+import authMiddleware from "../middlewares/auth.js";
 import { createContactSchema, updateContactSchema, updateFavoriteSchema } from "../schemas/contactsSchemas.js";
 
 const router = express.Router();
+router.use(authMiddleware); 
 
 router.get("/", getAllContacts);
 router.get("/:id", getOneContact);
