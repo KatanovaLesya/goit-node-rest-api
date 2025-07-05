@@ -1,9 +1,15 @@
+import fs from "fs/promises";
+import path from "path";
 import User from "../models/user.js"; 
 import bcrypt from "bcryptjs"; 
 import jwt from "jsonwebtoken";
 import {registerSchema, loginSchema } from "../schemas/authSchemas.js"; 
+import gravatar from "gravatar";
+
+const avatarsDir = path.resolve("public", "avatars");
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key";
+
 
 export const register = async (req, res, next) => {
   try {
@@ -24,12 +30,15 @@ export const register = async (req, res, next) => {
 
     const hashPassword = await bcrypt.hash(password, 10);
 
-    const newUser = await User.create({ email, password: hashPassword });
+    const avatarURL = gravatar.url(email, { s: '250', d: 'retro' }, true);
+
+    const newUser = await User.create({ email, password: hashPassword, avatarURL });
 
     res.status(201).json({
       user: {
         email: newUser.email,
         subscription: newUser.subscription,
+        avatarURL: newUser.avatarURL,
       },
     });
   } catch (error) {
@@ -89,9 +98,30 @@ export const logout = async (req, res, next) => {
 
 export const getCurrent = async (req, res, next) => {
     try {
-      const { email, subscription } = req.user;
-      res.status(200).json({ email, subscription });
+      const { email, subscription, avatarURL } = req.user;
+      res.status(200).json({ email, subscription, avatarURL });
     } catch (error) {
       next(error);
     }
 };
+
+export const updateAvatar = async (req, res, next) => {
+    try {
+      const { path: tempPath, originalname } = req.file;
+      const { id } = req.user;
+      const ext = path.extname(originalname);
+      const filename = `${id}_${Date.now()}${ext}`;
+      const finalPath = path.join(avatarsDir, filename);
+  
+      await fs.rename(tempPath, finalPath);
+  
+      const avatarURL = `/avatars/${filename}`;
+  
+      req.user.avatarURL = avatarURL;
+      await req.user.save();
+  
+      res.status(200).json({ avatarURL });
+    } catch (error) {
+      next(error);
+    }
+  };
