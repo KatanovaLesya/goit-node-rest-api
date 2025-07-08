@@ -1,5 +1,8 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../db/sequelize.js"; 
+import jwt from "jsonwebtoken";
+const { verify } = jwt;
+
 
 const User = sequelize.define("user", {
   password: {
@@ -23,6 +26,14 @@ const User = sequelize.define("user", {
       avatarURL: {
         type: DataTypes.STRING,
         defaultValue: "",
+      },
+      verify: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      verificationToken: {
+        type: DataTypes.STRING,
+        defaultValue: null,
       },
       
     }, {
